@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="FitnessNetwork.Api/FitnessNetwork.Api.csproj" />
+  <Project Path="FitnessNetwork.Chat/FitnessNetwork.Chat.csproj" />
+  <Project Path="FitnessNetwork.Common/FitnessNetwork.Common.csproj" />
+  <Project Path="FitnessNetwork.Seeder/FitnessNetwork.Seeder.csproj" />
+  <Project Path="FitnessNetwork.Tests/FitnessNetwork.Tests.csproj" />
+</Solution>

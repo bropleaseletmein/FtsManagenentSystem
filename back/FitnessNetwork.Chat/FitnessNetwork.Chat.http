@@ -1,0 +1,6 @@
+@FitnessNetwork.Chat_HostAddress = http://localhost:5066
+
+GET {{FitnessNetwork.Chat_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
