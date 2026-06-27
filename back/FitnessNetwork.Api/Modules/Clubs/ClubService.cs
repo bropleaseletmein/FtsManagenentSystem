@@ -12,6 +12,20 @@ public class ClubService(AppDbContext db)
     public async Task<List<Club>> GetAllClubsAsync() =>
         await db.Clubs.OrderBy(c => c.Name).ToListAsync();
 
+    public async Task<PagedResult<Club>> GetAllClubsPagedAsync(int page = 1, int pageSize = 20)
+    {
+        var query = db.Clubs
+            .OrderBy(c => c.Name);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<Club>(items, total, page, pageSize);
+    }
+
     public async Task<Club?> GetClubByIdAsync(Guid id) =>
         await db.Clubs.Include(c => c.Halls).FirstOrDefaultAsync(c => c.Id == id);
 

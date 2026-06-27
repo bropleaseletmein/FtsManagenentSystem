@@ -10,6 +10,21 @@ public class SubscriptionTypeService(AppDbContext db)
     public async Task<List<SubscriptionType>> GetAllAsync() =>
         await db.SubscriptionTypes.Include(st => st.Clubs).OrderBy(st => st.Name).ToListAsync();
 
+    public async Task<PagedResult<SubscriptionType>> GetAllPagedAsync(int page = 1, int pageSize = 20)
+    {
+        var query = db.SubscriptionTypes
+            .Include(st => st.Clubs)
+            .OrderBy(st => st.Name);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<SubscriptionType>(items, total, page, pageSize);
+    }
+
     public async Task<SubscriptionType?> GetByIdAsync(Guid id) =>
         await db.SubscriptionTypes.Include(st => st.Clubs).FirstOrDefaultAsync(st => st.Id == id);
 

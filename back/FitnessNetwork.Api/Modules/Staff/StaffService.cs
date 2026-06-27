@@ -10,6 +10,23 @@ public class StaffService(AppDbContext db)
     public async Task<List<Data.Entities.Staff>> GetAllAsync() =>
         await db.Staff.Include(s => s.Roles).Include(s => s.Club).OrderBy(s => s.LastName).ToListAsync();
 
+    public async Task<PagedResult<Data.Entities.Staff>> GetAllPagedAsync(int page = 1, int pageSize = 20)
+    {
+        var query = db.Staff
+            .Include(s => s.Roles)
+            .Include(s => s.Club)
+            .OrderBy(s => s.LastName)
+            .ThenBy(s => s.FirstName);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<Data.Entities.Staff>(items, total, page, pageSize);
+    }
+
     public async Task<Data.Entities.Staff?> GetByIdAsync(Guid id) =>
         await db.Staff.Include(s => s.Roles).Include(s => s.Club).FirstOrDefaultAsync(s => s.Id == id);
 

@@ -10,6 +10,21 @@ public class ClientService(AppDbContext db)
     public async Task<List<Client>> GetAllAsync() =>
         await db.Clients.OrderBy(c => c.LastName).ThenBy(c => c.FirstName).ToListAsync();
 
+    public async Task<PagedResult<Client>> GetAllPagedAsync(int page = 1, int pageSize = 20)
+    {
+        var query = db.Clients
+            .OrderBy(c => c.LastName)
+            .ThenBy(c => c.FirstName);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<Client>(items, total, page, pageSize);
+    }
+
     public async Task<Client?> GetByIdAsync(Guid id) =>
         await db.Clients.Include(c => c.Subscriptions).FirstOrDefaultAsync(c => c.Id == id);
 

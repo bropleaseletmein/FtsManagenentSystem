@@ -12,6 +12,20 @@ public class SchedulingService(AppDbContext db)
     public async Task<List<ClassType>> GetAllClassTypesAsync() =>
         await db.ClassTypes.OrderBy(ct => ct.Name).ToListAsync();
 
+    public async Task<PagedResult<ClassType>> GetAllClassTypesPagedAsync(int page = 1, int pageSize = 20)
+    {
+        var query = db.ClassTypes
+            .OrderBy(ct => ct.Name);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<ClassType>(items, total, page, pageSize);
+    }
+
     public async Task<Result<ClassType>> CreateClassTypeAsync(string name, string? description)
     {
         var ct = new ClassType { Name = name, Description = description };
@@ -68,6 +82,43 @@ public class SchedulingService(AppDbContext db)
                 cs.Status.ToString()
             ))
             .ToListAsync();
+
+    public async Task<PagedResult<ScheduleItemDto>> GetSchedulePagedAsync(
+        int page, int pageSize, Guid? clubId, Guid? trainerId, DateTime? from, DateTime? to)
+    {
+        var query = db.ClassSchedules
+            .Where(cs =>
+                (!clubId.HasValue || cs.Hall.ClubId == clubId) &&
+                (!trainerId.HasValue || cs.TrainerId == trainerId) &&
+                (!from.HasValue || cs.StartsAt >= from) &&
+                (!to.HasValue || cs.StartsAt <= to))
+            .OrderBy(cs => cs.StartsAt);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(cs => new ScheduleItemDto(
+                cs.Id,
+                cs.ClassTypeId,
+                cs.ClassType.Name,
+                cs.HallId,
+                cs.Hall.Name,
+                cs.Hall.ClubId,
+                cs.Hall.Club.Name,
+                cs.TrainerId,
+                cs.Trainer.FirstName,
+                cs.Trainer.LastName,
+                cs.StartsAt,
+                cs.EndsAt,
+                cs.Capacity,
+                cs.Bookings.Count(b => b.Status == BookingStatus.booked),
+                cs.Status.ToString()
+            ))
+            .ToListAsync();
+
+        return new PagedResult<ScheduleItemDto>(items, total, page, pageSize);
+    }
 
     public async Task<ClassSchedule?> GetScheduleItemAsync(Guid id) =>
         await db.ClassSchedules
