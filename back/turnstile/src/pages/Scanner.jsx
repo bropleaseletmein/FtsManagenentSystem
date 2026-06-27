@@ -18,10 +18,11 @@ export default function Scanner() {
     fetch(`${API}/clubs`)
       .then(r => r.json())
       .then(data => {
-        setClubs(data ?? [])
-        if (!clubId && data?.length) {
-          setClubId(data[0].id)
-          localStorage.setItem('turnstile_club', data[0].id)
+        const clubs = data?.items ?? data ?? []
+        setClubs(clubs)
+        if (!clubId && clubs?.length) {
+          setClubId(clubs[0].id)
+          localStorage.setItem('turnstile_club', clubs[0].id)
         }
       })
       .catch(() => {})
@@ -47,7 +48,7 @@ export default function Scanner() {
     localStorage.setItem('turnstile_club', id)
   }
 
-  const processImage = async (file) => {
+  const processImage = useCallback(async (file) => {
     if (!file || !clubId) return
     setScanning(true)
     setResult(null)
@@ -83,7 +84,23 @@ export default function Scanner() {
     } finally {
       setScanning(false)
     }
-  }
+  }, [clubId, mode])
+
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (let item of items) {
+        if (item.type.startsWith('image/')) {
+          processImage(item.getAsFile())
+          e.preventDefault()
+          break
+        }
+      }
+    }
+    document.addEventListener('paste', handlePaste)
+    return () => document.removeEventListener('paste', handlePaste)
+  }, [processImage])
 
   const clubName = clubs.find(c => c.id === clubId)?.name ?? ''
   const isEntry  = mode === 'entry'
@@ -170,25 +187,26 @@ const s = {
   },
   header: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '12px 20px', background: 'rgba(0,0,0,.3)',
-    borderBottom: '1px solid rgba(255,255,255,.06)', flexWrap: 'wrap', gap: 10,
+    padding: '16px 24px', background: 'transparent',
+    flexWrap: 'wrap', gap: 10,
   },
   brand: { fontSize: 13, fontWeight: 600, color: '#94a3b8', letterSpacing: '.02em' },
   select: {
-    background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)',
-    borderRadius: 4, color: '#f1f5f9', fontSize: 13, padding: '6px 10px',
+    background: 'rgba(255,255,255,.06)', border: 'none',
+    borderRadius: 6, color: '#f1f5f9', fontSize: 13, padding: '8px 12px',
     cursor: 'pointer', outline: 'none',
   },
   toggle: {
-    display: 'flex', background: 'rgba(0,0,0,.3)', borderRadius: 4,
-    border: '1px solid rgba(255,255,255,.1)', overflow: 'hidden',
+    display: 'flex', background: 'rgba(255,255,255,.05)', borderRadius: 6,
+    border: 'none', overflow: 'hidden',
   },
   toggleBtn: {
-    padding: '6px 18px', border: 'none', background: 'transparent',
+    padding: '8px 20px', border: 'none', background: 'transparent',
     color: '#64748b', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+    transition: 'color .2s, background .2s',
   },
   toggleActive: {
-    background: '#1d4ed8', color: '#fff',
+    background: '#2563eb', color: '#fff',
   },
   center: {
     flex: 1, display: 'flex', flexDirection: 'column',
@@ -198,9 +216,9 @@ const s = {
   title:       { fontSize: 26, fontWeight: 600, color: '#e2e8f0', margin: '0 0 8px' },
   sub:         { fontSize: 14, color: '#64748b', margin: '0 0 28px' },
   uploadBtn: {
-    padding: '12px 36px', borderRadius: 4, border: 'none',
-    background: '#1d4ed8', color: '#fff', fontSize: 15, fontWeight: 600,
-    cursor: 'pointer',
+    padding: '12px 36px', borderRadius: 6, border: 'none',
+    background: '#2563eb', color: '#fff', fontSize: 15, fontWeight: 600,
+    cursor: 'pointer', transition: 'background .2s',
   },
   resultTitle: { fontSize: 36, fontWeight: 700, margin: '0 0 16px', letterSpacing: 1 },
   clientName:  { fontSize: 28, fontWeight: 700, color: '#f1f5f9', margin: '0 0 8px' },
