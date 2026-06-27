@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import React from 'react'
 import { api } from '../api'
 import Modal from '../components/Modal'
 
@@ -81,8 +82,8 @@ export default function Clubs() {
           <table>
             <thead><tr><th>Название</th><th>Адрес</th><th>Телефон</th><th>Залы</th><th></th></tr></thead>
             <tbody>
-              {clubs.map(c => (<>
-                <tr key={c.id}>
+              {clubs.map(c => (<React.Fragment key={c.id}>
+                <tr>
                   <td><b>{c.name}</b></td>
                   <td>{c.address}</td>
                   <td>{c.phone ?? '—'}</td>
@@ -126,7 +127,7 @@ export default function Clubs() {
                     </td>
                   </tr>
                 )}
-              </>))}
+              </React.Fragment>))}
             </tbody>
           </table>
         )}

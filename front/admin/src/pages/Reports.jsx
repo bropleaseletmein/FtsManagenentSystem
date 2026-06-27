@@ -136,7 +136,7 @@ export default function Reports() {
           ) : (
             <div className="stat-grid">
               {occupancy.map(r => (
-                <div key={r.clubId} className="stat-card">
+                <div key={`occ-${r.clubId}`} className="stat-card">
                   <div className="stat-label">{r.clubName}</div>
                   <div className="stat-value">{r.currentVisitors}</div>
                   <div className="stat-sub">чел. внутри</div>
@@ -182,7 +182,7 @@ export default function Reports() {
               </thead>
               <tbody>
                 {attendance.map((r, i) => (
-                  <tr key={i}>
+                  <tr key={r.clubId ? `att-${r.clubId}-${r.date}-${i}` : `att-${i}`}>
                     <td>{fmtDate(r.date)}</td>
                     <td>{clubName(r.clubId)}</td>
                     <td><b>{r.visitCount}</b></td>
@@ -229,7 +229,7 @@ export default function Reports() {
               </thead>
               <tbody>
                 {workload.map(r => (
-                  <tr key={r.trainerId}>
+                  <tr key={`wl-${r.trainerId}`}>
                     <td><b>{r.trainerName}</b></td>
                     <td>{r.totalClasses}</td>
                     <td>{r.totalBookings}</td>
@@ -274,7 +274,7 @@ export default function Reports() {
               </thead>
               <tbody>
                 {classes.map(r => (
-                  <tr key={r.id}>
+                  <tr key={`cls-${r.id}`}>
                     <td style={{ whiteSpace: 'nowrap' }}>{fmt(r.startsAt)}</td>
                     <td><b>{r.classTypeName}</b></td>
                     <td>{r.capacity}</td>
