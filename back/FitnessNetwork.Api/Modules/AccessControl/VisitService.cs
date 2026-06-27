@@ -2,10 +2,11 @@ using FitnessNetwork.Api.Data;
 using FitnessNetwork.Api.Data.Entities;
 using FitnessNetwork.Common;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace FitnessNetwork.Api.Modules.AccessControl;
 
-public class VisitService(AppDbContext db)
+public class VisitService(AppDbContext db, IDistributedCache cache)
 {
     public async Task<List<Visit>> GetVisitsByClientAsync(Guid clientId) =>
         await db.Visits
@@ -24,6 +25,27 @@ public class VisitService(AppDbContext db)
                 (!to.HasValue || v.EnteredAt <= to))
             .OrderByDescending(v => v.EnteredAt)
             .ToListAsync();
+
+    public async Task<PagedResult<Visit>> GetVisitsPagedAsync(
+        int page, int pageSize, Guid? clubId, DateTime? from, DateTime? to)
+    {
+        var query = db.Visits
+            .Include(v => v.Club)
+            .Include(v => v.ClientSubscription).ThenInclude(cs => cs.Client)
+            .Where(v =>
+                (!clubId.HasValue || v.ClubId == clubId) &&
+                (!from.HasValue || v.EnteredAt >= from) &&
+                (!to.HasValue || v.EnteredAt <= to))
+            .OrderByDescending(v => v.EnteredAt);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<Visit>(items, total, page, pageSize);
+    }
 
     public async Task<Result<Visit>> RecordEntryAsync(
         Guid clubId, Guid clientSubscriptionId, EntryMethod entryMethod)
@@ -67,6 +89,7 @@ public class VisitService(AppDbContext db)
 
         db.Visits.Add(visit);
         await db.SaveChangesAsync();
+        await cache.RemoveAsync("current-occupancy");
         return Result<Visit>.Ok(visit);
     }
 
@@ -78,6 +101,7 @@ public class VisitService(AppDbContext db)
 
         visit.ExitedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+        await cache.RemoveAsync("current-occupancy");
         return Result<Visit>.Ok(visit);
     }
 }
