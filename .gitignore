@@ -1,0 +1,34 @@
+# C# / .NET
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+*.o
+*.so
+*.dylib
+*.a
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+launchSettings.json
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+.env.local
+.env.*.local
+
+# Dependencies
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Build
+build/
