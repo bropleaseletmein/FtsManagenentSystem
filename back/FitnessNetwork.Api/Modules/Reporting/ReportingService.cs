@@ -7,10 +7,10 @@ using System.Text.Json;
 
 namespace FitnessNetwork.Api.Modules.Reporting;
 
-file record AttendanceRow(Guid ClubId, DateOnly Date, long VisitCount);
-file record WorkloadRow(Guid TrainerId, string TrainerName, long TotalClasses, long TotalBookings);
-file record OccupancyRow(Guid Id, string ClassTypeName, DateTime StartsAt, int Capacity, long ActiveBookings, decimal OccupancyPct);
-file record CurrentRow(Guid ClubId, string ClubName, long CurrentVisitors);
+class AttendanceRow { public Guid ClubId { get; set; } public DateTime Date { get; set; } public long VisitCount { get; set; } }
+class WorkloadRow { public Guid TrainerId { get; set; } public string TrainerName { get; set; } public long TotalClasses { get; set; } public long TotalBookings { get; set; } }
+class OccupancyRow { public Guid Id { get; set; } public string ClassTypeName { get; set; } public DateTime StartsAt { get; set; } public int Capacity { get; set; } public long ActiveBookings { get; set; } public decimal OccupancyPct { get; set; } }
+class CurrentRow { public Guid ClubId { get; set; } public string ClubName { get; set; } public long CurrentVisitors { get; set; } }
 
 public class ReportingService(AppDbContext db, IDistributedCache cache)
 {
@@ -24,12 +24,13 @@ public class ReportingService(AppDbContext db, IDistributedCache cache)
 
     async Task<T> GetOrSet<T>(string key, TimeSpan ttl, Func<Task<T>> factory)
     {
+        var opts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var cached = await cache.GetStringAsync(key);
         if (cached is not null)
-            return JsonSerializer.Deserialize<T>(cached)!;
+            return JsonSerializer.Deserialize<T>(cached, opts)!;
 
         var value = await factory();
-        await cache.SetStringAsync(key, JsonSerializer.Serialize(value),
+        await cache.SetStringAsync(key, JsonSerializer.Serialize(value, opts),
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = ttl });
         return value;
     }
@@ -123,7 +124,7 @@ public class ReportingService(AppDbContext db, IDistributedCache cache)
 
     public Task<object> GetCurrentOccupancyAsync()
     {
-        return GetOrSet<object>("current-occupancy", TimeSpan.FromSeconds(30), async () =>
+        return GetOrSet<object>("current-occupancy", TimeSpan.FromMinutes(1), async () =>
         {
             const string sql = """
                 SELECT
