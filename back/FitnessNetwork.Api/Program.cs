@@ -61,9 +61,34 @@ builder.Services.AddStackExchangeRedisCache(opts =>
 });
 
 builder.Services.AddAuthorization();
+builder.Services.AddSwaggerGen(opts =>
+{
+    opts.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "JWT Authorization header using the Bearer scheme"
+    });
+    opts.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
     {
+        opts.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
         opts.JsonSerializerOptions.ReferenceHandler =
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         opts.JsonSerializerOptions.Converters.Add(
@@ -83,6 +108,8 @@ builder.Services.AddScoped<TurnstileService>();
 
 var app = builder.Build();
 
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
