@@ -78,10 +78,10 @@ body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--t
 .page-header p  { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
 /* Stat grid */
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
-.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; min-height: 100px; display: flex; flex-direction: column; justify-content: space-between; }
 .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
-.stat-value { font-size: 26px; font-weight: 700; color: var(--text); }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1.2; }
 .stat-sub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
 /* Table */
