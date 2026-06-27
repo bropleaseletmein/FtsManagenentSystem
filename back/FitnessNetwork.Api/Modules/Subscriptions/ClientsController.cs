@@ -20,10 +20,14 @@ public class ClientsController(ClientService clientSvc, SubscriptionService subS
         string FirstName, string LastName, string? Email, string? Phone, DateOnly? BirthDate);
 
     public record SellSubscriptionRequest(Guid SubscriptionTypeId);
-    public record SetCredentialsRequest(string Email, string Password);
+    public record SetClientCredentialsRequest(string Email, string Password);
 
     [HttpGet("me")]
     [Authorize(Roles = Roles.Client)]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMe()
     {
         var idStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -36,10 +40,20 @@ public class ClientsController(ClientService clientSvc, SubscriptionService subS
 
     [HttpGet]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Trainer}")]
-    public async Task<IActionResult> GetAll() => Ok(await clientSvc.GetAllAsync());
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await clientSvc.GetAllPagedAsync(page, pageSize));
 
     [HttpGet("{id:guid}")]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Trainer}")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var client = await clientSvc.GetByIdAsync(id);
@@ -48,6 +62,10 @@ public class ClientsController(ClientService clientSvc, SubscriptionService subS
 
     [HttpPost]
     [Authorize(Roles = Roles.Admin)]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateClientRequest req)
     {
         var result = await clientSvc.CreateAsync(
@@ -58,6 +76,9 @@ public class ClientsController(ClientService clientSvc, SubscriptionService subS
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Client}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateClientRequest req)
     {
         var result = await clientSvc.UpdateAsync(id, req.FirstName, req.LastName, req.Email, req.Phone, req.BirthDate);
@@ -66,6 +87,9 @@ public class ClientsController(ClientService clientSvc, SubscriptionService subS
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await clientSvc.DeleteAsync(id);
@@ -74,7 +98,10 @@ public class ClientsController(ClientService clientSvc, SubscriptionService subS
 
     [HttpPost("{id:guid}/credentials")]
     [Authorize(Roles = Roles.Admin)]
-    public async Task<IActionResult> SetCredentials(Guid id, [FromBody] SetCredentialsRequest req)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> SetCredentials(Guid id, [FromBody] SetClientCredentialsRequest req)
     {
         var result = await clientSvc.SetCredentialsAsync(id, req.Email, req.Password);
         return result.IsSuccess ? NoContent() : NotFound(new { error = result.Error });
@@ -82,6 +109,9 @@ public class ClientsController(ClientService clientSvc, SubscriptionService subS
 
     [HttpGet("me/qr-token")]
     [Authorize(Roles = Roles.Client)]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public IActionResult GetQrToken()
     {
         var idStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -92,6 +122,9 @@ public class ClientsController(ClientService clientSvc, SubscriptionService subS
 
     [HttpGet("me/visits")]
     [Authorize(Roles = Roles.Client)]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyVisits()
     {
         var idStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -102,11 +135,18 @@ public class ClientsController(ClientService clientSvc, SubscriptionService subS
 
     [HttpGet("{id:guid}/subscriptions")]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Trainer},{Roles.Client}")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetSubscriptions(Guid id) =>
         Ok(await subSvc.GetByClientAsync(id));
 
     [HttpPost("{id:guid}/subscriptions")]
     [Authorize(Roles = Roles.Admin)]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SellSubscription(Guid id, [FromBody] SellSubscriptionRequest req)
     {
         var result = await subSvc.SellAsync(id, req.SubscriptionTypeId);

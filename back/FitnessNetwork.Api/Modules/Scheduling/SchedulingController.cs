@@ -15,10 +15,18 @@ public class ClassTypesController(SchedulingService svc) : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll() => Ok(await svc.GetAllClassTypesAsync());
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await svc.GetAllClassTypesPagedAsync(page, pageSize));
 
     [HttpPost]
     [Authorize(Roles = Roles.Admin)]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] ClassTypeRequest req)
     {
         var result = await svc.CreateClassTypeAsync(req.Name, req.Description);
@@ -27,6 +35,9 @@ public class ClassTypesController(SchedulingService svc) : ControllerBase
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(Guid id, [FromBody] ClassTypeRequest req)
     {
         var result = await svc.UpdateClassTypeAsync(id, req.Name, req.Description);
@@ -35,6 +46,9 @@ public class ClassTypesController(SchedulingService svc) : ControllerBase
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await svc.DeleteClassTypeAsync(id);
@@ -55,15 +69,22 @@ public class ScheduleController(SchedulingService svc) : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSchedule(
         [FromQuery] Guid? clubId,
         [FromQuery] Guid? trainerId,
         [FromQuery] DateTime? from,
-        [FromQuery] DateTime? to) =>
-        Ok(await svc.GetScheduleAsync(clubId, trainerId, from, to));
+        [FromQuery] DateTime? to,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await svc.GetSchedulePagedAsync(page, pageSize, clubId, trainerId, from, to));
 
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var item = await svc.GetScheduleItemAsync(id);
@@ -72,6 +93,10 @@ public class ScheduleController(SchedulingService svc) : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Trainer}")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateScheduleRequest req)
     {
         var result = await svc.CreateScheduleAsync(
@@ -82,6 +107,9 @@ public class ScheduleController(SchedulingService svc) : ControllerBase
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(Guid id, [FromBody] CreateScheduleRequest req)
     {
         var result = await svc.UpdateScheduleAsync(
@@ -91,6 +119,10 @@ public class ScheduleController(SchedulingService svc) : ControllerBase
 
     [HttpPut("{id:guid}/status")]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Trainer}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusRequest req)
     {
         if (!Enum.TryParse<ClassStatus>(req.Status, true, out var status))
@@ -110,6 +142,9 @@ public class BookingsController(SchedulingService svc) : ControllerBase
 
     [HttpGet("my")]
     [Authorize(Roles = Roles.Client)]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyBookings()
     {
         var idStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -122,6 +157,10 @@ public class BookingsController(SchedulingService svc) : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Client}")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Book([FromBody] BookRequest req)
     {
         var result = await svc.BookAsync(req.ClientSubscriptionId, req.ClassScheduleId);
@@ -131,6 +170,9 @@ public class BookingsController(SchedulingService svc) : ControllerBase
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Client}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Cancel(Guid id)
     {
         var result = await svc.CancelBookingAsync(id);

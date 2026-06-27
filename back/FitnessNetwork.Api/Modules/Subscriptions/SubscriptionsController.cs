@@ -14,6 +14,10 @@ public class SubscriptionsController(SubscriptionService svc) : ControllerBase
     public record ChangeStatusRequest(string Status);
 
     [HttpGet("{id:guid}")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var sub = await svc.GetByIdAsync(id);
@@ -21,6 +25,10 @@ public class SubscriptionsController(SubscriptionService svc) : ControllerBase
     }
 
     [HttpPost("{id:guid}/freeze")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Freeze(Guid id, [FromBody] FreezeRequest req)
     {
         var result = await svc.FreezeAsync(id, req.StartedAt);
@@ -29,6 +37,9 @@ public class SubscriptionsController(SubscriptionService svc) : ControllerBase
     }
 
     [HttpPost("{id:guid}/unfreeze")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Unfreeze(Guid id)
     {
         var result = await svc.UnfreezeAsync(id);
@@ -36,6 +47,10 @@ public class SubscriptionsController(SubscriptionService svc) : ControllerBase
     }
 
     [HttpPut("{id:guid}/status")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> ChangeStatus(Guid id, [FromBody] ChangeStatusRequest req)
     {
         if (!Enum.TryParse<SubscriptionStatus>(req.Status, true, out var status))
@@ -57,10 +72,18 @@ public class SubscriptionTypesController(SubscriptionTypeService svc) : Controll
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll() => Ok(await svc.GetAllAsync());
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await svc.GetAllPagedAsync(page, pageSize));
 
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var st = await svc.GetByIdAsync(id);
@@ -69,6 +92,10 @@ public class SubscriptionTypesController(SubscriptionTypeService svc) : Controll
 
     [HttpPost]
     [Authorize(Roles = Roles.Admin)]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateTypeRequest req)
     {
         var result = await svc.CreateAsync(req.Name, req.DurationDays, req.VisitsLimit, req.Price, req.IsAllClubs, req.ClubIds);
@@ -78,6 +105,9 @@ public class SubscriptionTypesController(SubscriptionTypeService svc) : Controll
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(Guid id, [FromBody] CreateTypeRequest req)
     {
         var result = await svc.UpdateAsync(id, req.Name, req.DurationDays, req.VisitsLimit, req.Price, req.IsAllClubs, req.ClubIds);
@@ -86,6 +116,9 @@ public class SubscriptionTypesController(SubscriptionTypeService svc) : Controll
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await svc.DeleteAsync(id);

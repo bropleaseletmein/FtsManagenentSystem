@@ -13,13 +13,22 @@ public class VisitsController(VisitService svc) : ControllerBase
     public record EntryRequest(Guid ClubId, Guid ClientSubscriptionId, string EntryMethod);
 
     [HttpGet]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetVisits(
         [FromQuery] Guid? clubId,
         [FromQuery] DateTime? from,
-        [FromQuery] DateTime? to) =>
-        Ok(await svc.GetVisitsAsync(clubId, from, to));
+        [FromQuery] DateTime? to,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await svc.GetVisitsPagedAsync(page, pageSize, clubId, from, to));
 
     [HttpPost("entry")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RecordEntry([FromBody] EntryRequest req)
     {
         if (!Enum.TryParse<EntryMethod>(req.EntryMethod, true, out var method))
@@ -31,6 +40,10 @@ public class VisitsController(VisitService svc) : ControllerBase
     }
 
     [HttpPut("{id:guid}/exit")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RecordExit(Guid id)
     {
         var result = await svc.RecordExitAsync(id);

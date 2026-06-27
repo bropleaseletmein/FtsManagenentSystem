@@ -10,6 +10,9 @@ public class AuthController(AuthService authService) : ControllerBase
     public record TokenResponse(string Token);
 
     [HttpPost("staff/login")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> StaffLogin([FromBody] LoginRequest req)
     {
         var result = await authService.LoginStaffAsync(req.Email, req.Password);
@@ -18,6 +21,9 @@ public class AuthController(AuthService authService) : ControllerBase
     }
 
     [HttpPost("client/login")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> ClientLogin([FromBody] LoginRequest req)
     {
         var result = await authService.LoginClientAsync(req.Email, req.Password);

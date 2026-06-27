@@ -16,11 +16,18 @@ public class ClubsController(ClubService svc) : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll() =>
-        Ok(await svc.GetAllClubsAsync());
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await svc.GetAllClubsPagedAsync(page, pageSize));
 
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var club = await svc.GetClubByIdAsync(id);
@@ -29,6 +36,9 @@ public class ClubsController(ClubService svc) : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = Roles.Admin)]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateClubRequest req)
     {
         var club = await svc.CreateClubAsync(req.Name, req.Address, req.Phone);
@@ -37,6 +47,9 @@ public class ClubsController(ClubService svc) : ControllerBase
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateClubRequest req)
     {
         var result = await svc.UpdateClubAsync(id, req.Name, req.Address, req.Phone);
@@ -45,21 +58,28 @@ public class ClubsController(ClubService svc) : ControllerBase
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await svc.DeleteClubAsync(id);
         return result.IsSuccess ? NoContent() : NotFound(new { error = result.Error });
     }
 
-    // --- Halls ---
-
     [HttpGet("{clubId:guid}/halls")]
     [AllowAnonymous]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetHalls(Guid clubId) =>
         Ok(await svc.GetHallsByClubAsync(clubId));
 
     [HttpPost("{clubId:guid}/halls")]
     [Authorize(Roles = Roles.Admin)]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateHall(Guid clubId, [FromBody] CreateHallRequest req)
     {
         var result = await svc.CreateHallAsync(clubId, req.Name, req.Capacity);
@@ -69,6 +89,9 @@ public class ClubsController(ClubService svc) : ControllerBase
 
     [HttpPut("halls/{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateHall(Guid id, [FromBody] UpdateHallRequest req)
     {
         var result = await svc.UpdateHallAsync(id, req.Name, req.Capacity);
@@ -77,6 +100,9 @@ public class ClubsController(ClubService svc) : ControllerBase
 
     [HttpDelete("halls/{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeleteHall(Guid id)
     {
         var result = await svc.DeleteHallAsync(id);

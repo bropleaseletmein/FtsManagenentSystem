@@ -16,11 +16,15 @@ public class StaffController(StaffService svc) : ControllerBase
         List<string> Roles, string? Password);
 
     public record UpdateStaffRequest(string FirstName, string LastName, string Email);
-    public record SetCredentialsRequest(string Email, string Password);
+    public record SetStaffCredentialsRequest(string Email, string Password);
     public record AddRoleRequest(string Role);
 
     [HttpGet("me")]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Trainer}")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMe()
     {
         var idStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -32,10 +36,20 @@ public class StaffController(StaffService svc) : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Trainer}")]
-    public async Task<IActionResult> GetAll() => Ok(await svc.GetAllAsync());
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await svc.GetAllPagedAsync(page, pageSize));
 
     [HttpGet("{id:guid}")]
     [Authorize(Roles = $"{Roles.Admin},{Roles.Trainer}")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var staff = await svc.GetByIdAsync(id);
@@ -43,6 +57,10 @@ public class StaffController(StaffService svc) : ControllerBase
     }
 
     [HttpPost]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateStaffRequest req)
     {
         var roles = req.Roles
@@ -56,6 +74,9 @@ public class StaffController(StaffService svc) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateStaffRequest req)
     {
         var result = await svc.UpdateAsync(id, req.FirstName, req.LastName, req.Email);
@@ -63,6 +84,9 @@ public class StaffController(StaffService svc) : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await svc.DeleteAsync(id);
@@ -70,6 +94,9 @@ public class StaffController(StaffService svc) : ControllerBase
     }
 
     [HttpPost("{id:guid}/roles")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> AddRole(Guid id, [FromBody] AddRoleRequest req)
     {
         if (!Enum.TryParse<StaffRoleType>(req.Role, true, out var role))
@@ -80,6 +107,10 @@ public class StaffController(StaffService svc) : ControllerBase
     }
 
     [HttpDelete("{id:guid}/roles/{role}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RemoveRole(Guid id, string role)
     {
         if (!Enum.TryParse<StaffRoleType>(role, true, out var roleType))
@@ -90,7 +121,10 @@ public class StaffController(StaffService svc) : ControllerBase
     }
 
     [HttpPost("{id:guid}/credentials")]
-    public async Task<IActionResult> SetCredentials(Guid id, [FromBody] SetCredentialsRequest req)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> SetCredentials(Guid id, [FromBody] SetStaffCredentialsRequest req)
     {
         var result = await svc.SetCredentialsAsync(id, req.Email, req.Password);
         return result.IsSuccess ? NoContent() : NotFound(new { error = result.Error });
