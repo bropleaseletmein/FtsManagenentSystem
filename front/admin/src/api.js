@@ -14,6 +14,11 @@ async function request(method, url, body) {
   if (res.status === 204) return null
   const data = await res.json().catch(() => null)
   if (!res.ok) throw new Error(data?.error ?? data?.title ?? `HTTP ${res.status}`)
+
+  // Handle PagedResult - extract items for list endpoints
+  if (data?.items && Array.isArray(data.items) && data.total !== undefined) {
+    return data.items
+  }
   return data
 }
 

@@ -13,7 +13,13 @@ async function request(method, url, body) {
     throw new Error(err.error || `HTTP ${res.status}`)
   }
   const text = await res.text()
-  return text ? JSON.parse(text) : null
+  const data = text ? JSON.parse(text) : null
+
+  // Handle PagedResult - extract items for list endpoints
+  if (data?.items && Array.isArray(data.items) && data.total !== undefined) {
+    return data.items
+  }
+  return data
 }
 
 export const api = {
